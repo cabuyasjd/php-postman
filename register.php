@@ -1,10 +1,13 @@
 <?php
+// Establece la respuesta como JSON
 header('Content-Type: application/json');
 
+// Incluye la conexión a la base de datos
 require_once __DIR__ . '/config/db.php';
 
 $pdo = $GLOBALS['pdo'] ?? null;
 
+// Solo acepta peticiones POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Método no permitido.']);
@@ -17,7 +20,25 @@ if (!$pdo) {
     exit;
 }
 
-$data = json_decode(file_get_contents('php://input'), true) ?? [];
+// Lee los datos enviados en formato JSON o formulario
+$rawInput = file_get_contents('php://input');
+$data = [];
+
+if (!empty($rawInput)) {
+    $decoded = json_decode($rawInput, true);
+    if (is_array($decoded)) {
+        $data = $decoded;
+    }
+}
+
+if (empty($data) && !empty($_POST)) {
+    $data = $_POST;
+}
+
+if (empty($data)) {
+    $data = $_REQUEST;
+}
+
 $username = trim($data['username'] ?? '');
 $email = trim($data['email'] ?? '');
 $password = $data['password'] ?? '';

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prueba API Login/Register</title>
+  <style>
+    /* Estilos generales para centrar la tarjeta del formulario */
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .card {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+    h2 { margin-top: 0; }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .switch {
+      text-align: center;
+      margin-top: 12px;
+      color: #2563eb;
+      cursor: pointer;
+    }
+    .response {
+      margin-top: 14px;
+      padding: 10px;
+      border-radius: 8px;
+      background: #eef2ff;
+      white-space: pre-wrap;
+      border-left: 4px solid #2563eb;
+    }
+    .success {
+      background: #dcfce7;
+      border-left-color: #16a34a;
+      color: #166534;
+    }
+    .error {
+      background: #fee2e2;
+      border-left-color: #dc2626;
+      color: #991b1b;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2 id="title">Registro</h2>
+    <form id="form">
+      <input id="username" placeholder="Usuario" />
+      <input id="email" type="email" placeholder="Correo" />
+      <input id="password" type="password" placeholder="Contraseña" />
+      <button type="submit" id="submitBtn">Registrar</button>
+    </form>
+    <div class="switch" id="switchBtn">¿Ya tienes cuenta? Inicia sesión</div>
+    <div id="response" class="response" style="display:none"></div>
+  </div>
+
+  <script>
+    // Referencias a los elementos del formulario
+    const form = document.getElementById('form');
+    const title = document.getElementById('title');
+    const submitBtn = document.getElementById('submitBtn');
+    const switchBtn = document.getElementById('switchBtn');
+    const response = document.getElementById('response');
+    const username = document.getElementById('username');
+    const email = document.getElementById('email');
+    const password = document.getElementById('password');
+
+    // Controla si estamos en modo login o registro
+    let isLogin = false;
+
+    function toggleMode() {
+      isLogin = !isLogin;
+      title.textContent = isLogin ? 'Iniciar sesión' : 'Registro';
+      submitBtn.textContent = isLogin ? 'Entrar' : 'Registrar';
+      email.style.display = isLogin ? 'none' : 'block';
+      username.placeholder = isLogin ? 'Usuario o correo' : 'Usuario';
+      switchBtn.textContent = isLogin ? '¿No tienes cuenta? Regístrate' : '¿Ya tienes cuenta? Inicia sesión';
+      response.style.display = 'none';
+    }
+
+    switchBtn.addEventListener('click', toggleMode);
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      response.style.display = 'block';
+      response.textContent = 'Enviando...';
+
+      const endpoint = isLogin ? 'login.php' : 'register.php';
+      const body = new URLSearchParams();
+
+      if (isLogin) {
+        body.append('login', username.value);
+        body.append('password', password.value);
+      } else {
+        body.append('username', username.value);
+        body.append('email', email.value);
+        body.append('password', password.value);
+      }
+
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+          body: body.toString()
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          response.className = 'response success';
+          response.textContent = isLogin
+            ? 'Inicio de sesión exitoso ✅'
+            : 'Registro exitoso ✅';
+        } else {
+          response.className = 'response error';
+          response.textContent = data.message || 'Ocurrió un error.';
+        }
+      } catch (err) {
+        response.className = 'response error';
+        response.textContent = 'Error: ' + err.message;
+      }
+    });
+
+    toggleMode();
+  </script>
+</body>
+</html>
